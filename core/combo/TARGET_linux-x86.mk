@@ -23,7 +23,7 @@ TARGET_ARCH_VARIANT := x86
 endif
 
 ifeq ($(strip $(TARGET_GCC_VERSION_EXP)),)
-TARGET_GCC_VERSION := 4.7
+TARGET_GCC_VERSION := 4.6
 else
 TARGET_GCC_VERSION := $(TARGET_GCC_VERSION_EXP)
 endif
@@ -89,6 +89,7 @@ TARGET_GLOBAL_CFLAGS += \
 			-O2 \
 			-Ulinux \
 			-Wa,--noexecstack \
+			-Wno-missing-field-initializers \
 			-Werror=format-security \
 			-D_FORTIFY_SOURCE=1 \
 			-Wstrict-aliasing=2 \
@@ -153,6 +154,19 @@ TARGET_GLOBAL_LDFLAGS += -Wl,-z,noexecstack
 TARGET_GLOBAL_LDFLAGS += -Wl,-z,relro -Wl,-z,now
 TARGET_GLOBAL_LDFLAGS += -Wl,--warn-shared-textrel
 TARGET_GLOBAL_LDFLAGS += -Wl,--gc-sections
+
+# unless CUSTOM_KERNEL_HEADERS is defined, we're going to use
+# symlinks located in out/ to point to the appropriate kernel
+# headers. see 'config/kernel_headers.make' for more details
+#
+ifneq ($(CUSTOM_KERNEL_HEADERS),)
+    KERNEL_HEADERS_COMMON := $(CUSTOM_KERNEL_HEADERS)
+    KERNEL_HEADERS_ARCH   := $(CUSTOM_KERNEL_HEADERS)
+else
+    KERNEL_HEADERS_COMMON := $(libc_root)/kernel/common
+    KERNEL_HEADERS_ARCH   := $(libc_root)/kernel/arch-$(TARGET_ARCH)
+endif
+KERNEL_HEADERS := $(KERNEL_HEADERS_COMMON) $(KERNEL_HEADERS_ARCH)
 
 TARGET_C_INCLUDES := \
 	$(libc_root)/arch-x86/include \
